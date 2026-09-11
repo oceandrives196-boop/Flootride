@@ -41,6 +41,11 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
 .compass-wrap{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;pointer-events:none;text-align:center}
 .arrow-circle{width:110px;height:110px;border-radius:50%;background:rgba(124,58,237,.12);border:3px solid #7C3AED;display:grid;place-items:center;margin:0 auto;box-shadow:0 8px 30px rgba(124,58,237,.25)}
 .arrow{font-size:42px;color:#7C3AED;transition:transform.3s ease}
+.suggestBox{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #EDE9FE;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;max-height:180px;overflow:auto;display:none}
+.suggestItem{padding:10px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #F5F3FF;display:flex;gap:8px;align-items:center}
+.suggestItem:hover{background:#F5F3FF}
+.suggestItem:last-child{border-bottom:none}
+.suggestItem i{color:#7C3AED;font-size:10px}
 @keyframes pulse{0%{opacity:1}50%{opacity:.4}100%{opacity:1}}
 </style>
 </head>
@@ -50,7 +55,7 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
   <div style="text-align:center;color:#fff;margin-bottom:20px">
     <div class="logo-big"><i class="fa-solid fa-box"></i></div>
     <div style="font-weight:900;font-size:22px">FLOOT NG</div>
-    <div style="opacity:.8;font-size:13px;margin-top:4px">Customer App • White Purple</div>
+    <div style="opacity:.8;font-size:13px;margin-top:4px">Customer App • Auto Fare ₦200/km</div>
   </div>
   <div class="auth-card">
     <div class="tabs"><div id="loginTab" class="tab active">Login</div><div id="regTab" class="tab">Register</div></div>
@@ -90,14 +95,22 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
   </div>
   <div class="main">
     <div class="card">
-      <div class="label">SEND A PARCEL • Runners & Bikers</div>
-      <div class="input-wrap"><i class="fa-solid fa-location-dot"></i><input id="pickup" class="input" placeholder="Pickup Address (e.g. Ketu) *"></div>
-      <div class="input-wrap"><i class="fa-solid fa-flag-checkered"></i><input id="dropoff" class="input" placeholder="Dropoff Address (e.g. Lekki) *"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div class="input-wrap"><i class="fa-solid fa-box"></i><input id="itemType" class="input" placeholder="Item (Food, Docs)"></div>
-        <div class="input-wrap"><i class="fa-solid fa-road"></i><input id="distance" class="input" type="number" placeholder="Distance km"></div>
+      <div class="label">SEND A PARCEL • Auto Fare • Real Address</div>
+      <div class="input-wrap" style="position:relative"><i class="fa-solid fa-location-dot"></i><input id="pickup" class="input" placeholder="Start typing pickup (e.g. Ketu) *" autocomplete="off"><div id="pickupSuggest" class="suggestBox"></div></div>
+      <div class="input-wrap" style="position:relative"><i class="fa-solid fa-flag-checkered"></i><input id="dropoff" class="input" placeholder="Start typing dropoff (e.g. Lekki) *" autocomplete="off"><div id="dropoffSuggest" class="suggestBox"></div></div>
+      <div class="input-wrap"><i class="fa-solid fa-box"></i><input id="itemType" class="input" placeholder="Item (Food, Docs)"></div>
+
+      <div id="autoFareBox" style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1px solid #DDD6FE;border-radius:14px;padding:12px;margin-top:4px;margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#7C3AED">AUTO DISTANCE</div><div id="autoDistance" style="font-weight:900;font-size:16px;color:#1F1A2E">-- km</div><div style="font-size:10px;color:#8B8BA7" id="autoRoute">Enter pickup & dropoff</div></div>
+          <div style="text-align:right"><div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#7C3AED">FARE • ₦200/km</div><div id="autoFare" style="font-weight:900;font-size:20px;color:#7C3AED">₦0</div><div style="font-size:9px;background:#7C3AED;color:#fff;padding:2px 6px;border-radius:999px;font-weight:800;margin-top:2px;display:inline-block">FIXED RATE</div></div>
+        </div>
+        <div style="margin-top:8px;background:#fff;border-radius:8px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:#6B7280"><i class="fa-solid fa-calculator"></i> Calculation:</span>
+          <span style="font-size:11px;font-weight:700" id="calcText">-- km × ₦200 = ₦0</span>
+        </div>
       </div>
-      <div class="input-wrap"><i class="fa-solid fa-naira-sign"></i><input id="offer" class="input" type="number" placeholder="Offer Amount ₦ *"></div>
+      <input type="hidden" id="distance"><input type="hidden" id="offer">
       <div class="input-wrap"><i class="fa-solid fa-pen"></i><input id="desc" class="input" placeholder="Description (optional)"></div>
 
       <div style="margin-top:12px">
@@ -174,6 +187,111 @@ const db = getFirestore(app);
 
 let currentUser=null, allOrders=[], currentTrack=null, profilePicB64=null, parcelPicB64=null;
 let osmMap=null, driverMarker=null, customerMarker=null, routeLine=null;
+let lastCalculatedDistance=0;
+let lastCalculatedFare=0;
+let pickupSelected=false, dropoffSelected=false;
+
+function debounce(fn, delay){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay); }; }
+
+async function fetchPlaces(query){
+  if(!query || query.length<2) return [];
+  try{
+    const url=`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&countrycodes=ng&addressdetails=1&extratags=1`;
+    const r=await fetch(url);
+    const data=await r.json();
+    return data.map(d=>({display: d.display_name, short: (d.address?.road||d.name||'').slice(0,30), full: d.display_name, lat: d.lat, lon: d.lon, type: d.type||d.class}));
+  }catch{ return []; }
+}
+
+function showSuggestions(boxId, items, inputId){
+  const box=document.getElementById(boxId);
+  if(!items.length){ box.style.display='none'; return; }
+  box.innerHTML=items.map((it,i)=>`<div class="suggestItem" data-idx="${i}"><i class="fa-solid fa-location-dot"></i><div style="flex:1"><b>${it.short||it.display.split(',')[0]}</b><div style="font-size:10px;color:#8B8BA7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${it.display}</div></div></div>`).join('');
+  box.style.display='block';
+  box.querySelectorAll('.suggestItem').forEach((el, idx)=>{
+    el.onclick=()=>{
+      const it=items[idx];
+      document.getElementById(inputId).value=it.display.split(',').slice(0,3).join(',').trim();
+      box.style.display='none';
+      if(inputId==='pickup') pickupSelected=true; else dropoffSelected=true;
+      calculateFare();
+    };
+  });
+}
+
+const handlePickupInput = debounce(async (e)=>{
+  const q=e.target.value.trim();
+  if(q.length<2){ document.getElementById('pickupSuggest').style.display='none'; return; }
+  const places=await fetchPlaces(q);
+  showSuggestions('pickupSuggest', places, 'pickup');
+}, 350);
+
+const handleDropoffInput = debounce(async (e)=>{
+  const q=e.target.value.trim();
+  if(q.length<2){ document.getElementById('dropoffSuggest').style.display='none'; return; }
+  const places=await fetchPlaces(q);
+  showSuggestions('dropoffSuggest', places, 'dropoff');
+}, 350);
+
+async function geocodeForFare(addr){
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr+', Lagos, Nigeria')}&limit=1`);
+    const j=await r.json();
+    if(j[0]) return {lat: parseFloat(j[0].lat), lng: parseFloat(j[0].lon), display: j[0].display_name};
+  }catch{}
+  return null;
+}
+async function getRouteDistance(lat1,lng1,lat2,lng2){
+  try{
+    const url=`https://router.project-osrm.org/route/v1/driving/${lng1},${lat1};${lng2},${lat2}?overview=false`;
+    const r=await fetch(url);
+    const j=await r.json();
+    if(j.routes && j.routes[0]){ return j.routes[0].distance/1000; }
+  }catch{}
+  const toRad=d=>d*Math.PI/180;
+  const R=6371;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+async function calculateFare(){
+  const pickup=document.getElementById("pickup").value.trim();
+  const dropoff=document.getElementById("dropoff").value.trim();
+  const distEl=document.getElementById("autoDistance");
+  const fareEl=document.getElementById("autoFare");
+  const routeEl=document.getElementById("autoRoute");
+  const calcEl=document.getElementById("calcText");
+  if(!pickup ||!dropoff || pickup.length<3 || dropoff.length<3){
+    distEl.textContent="-- km"; fareEl.textContent="₦0"; routeEl.textContent="Enter pickup & dropoff"; calcEl.textContent="-- km × ₦200 = ₦0";
+    return;
+  }
+  distEl.textContent="Calculating..."; routeEl.textContent="Finding route...";
+  const p1=await geocodeForFare(pickup);
+  const p2=await geocodeForFare(dropoff);
+  if(!p1 ||!p2){
+    const estDist=5 + Math.random()*3;
+    lastCalculatedDistance=estDist;
+    lastCalculatedFare=Math.max(500, Math.round(estDist*200));
+    distEl.textContent=estDist.toFixed(1)+" km (est.)";
+    fareEl.textContent="₦"+lastCalculatedFare.toLocaleString();
+    calcEl.textContent=`${estDist.toFixed(1)} km × ₦200 = ₦${lastCalculatedFare.toLocaleString()}`;
+    routeEl.textContent=`${pickup} → ${dropoff}`;
+    document.getElementById("distance").value=estDist.toFixed(1);
+    document.getElementById("offer").value=lastCalculatedFare;
+    return;
+  }
+  let dist=await getRouteDistance(p1.lat,p1.lng,p2.lat,p2.lng);
+  if(dist<0.5) dist=0.5;
+  const fare=Math.max(500, Math.round(dist*200));
+  lastCalculatedDistance=dist;
+  lastCalculatedFare=fare;
+  distEl.textContent=dist.toFixed(1)+" km";
+  fareEl.textContent="₦"+fare.toLocaleString();
+  calcEl.textContent=`${dist.toFixed(1)} km × ₦200 = ₦${fare.toLocaleString()}`;
+  routeEl.textContent=`${pickup} → ${dropoff} • ${Math.round(dist*3)} min`;
+  document.getElementById("distance").value=dist.toFixed(1);
+  document.getElementById("offer").value=fare;
+}
 
 document.getElementById("loginTab").onclick=()=>{
   document.getElementById("loginTab").classList.add("active"); document.getElementById("regTab").classList.remove("active");
@@ -228,6 +346,18 @@ function loginWithProfile(profile){
   const av=document.getElementById("avatar");
   if(profile.profilePic){ av.innerHTML=`<img src="${profile.profilePic}">`; } else { av.textContent=profile.name.charAt(0); }
   showMain(); startListener(profile.id);
+  setTimeout(()=>{
+    const p=document.getElementById('pickup');
+    const d=document.getElementById('dropoff');
+    if(p){ p.addEventListener('input', handlePickupInput); p.addEventListener('focus', handlePickupInput); }
+    if(d){ d.addEventListener('input', handleDropoffInput); d.addEventListener('focus', handleDropoffInput); }
+    document.addEventListener('click', (e)=>{
+      if(!e.target.closest('#pickup') &&!e.target.closest('#pickupSuggest')) document.getElementById('pickupSuggest').style.display='none';
+      if(!e.target.closest('#dropoff') &&!e.target.closest('#dropoffSuggest')) document.getElementById('dropoffSuggest').style.display='none';
+    });
+    document.getElementById('pickup').addEventListener('blur', calculateFare);
+    document.getElementById('dropoff').addEventListener('blur', calculateFare);
+  },500);
 }
 
 document.getElementById("regBtn").onclick=async()=>{
@@ -280,12 +410,14 @@ document.getElementById("requestBtn").onclick=async()=>{
   const pickup=document.getElementById("pickup").value.trim();
   const dropoff=document.getElementById("dropoff").value.trim();
   const itemType=document.getElementById("itemType").value.trim()||"Parcel";
-  const distance=parseFloat(document.getElementById("distance").value)||5;
-  const offer=parseInt(document.getElementById("offer").value)||0;
+  if(lastCalculatedDistance===0){ await calculateFare(); }
+  const distance=lastCalculatedDistance||parseFloat(document.getElementById("distance").value)||5;
+  const offer=lastCalculatedFare||parseInt(document.getElementById("offer").value)||0;
   const desc=document.getElementById("desc").value.trim();
   const msg=document.getElementById("requestMsg");
   if(!parcelPicB64){ document.getElementById("parcelErr").style.display='block'; msg.textContent="❌ Parcel photo required"; return; }
-  if(!pickup||!dropoff||!offer){ msg.textContent="❌ Fill pickup, dropoff, offer"; return; }
+  if(!pickup||!dropoff||!offer){ msg.textContent="❌ Fill pickup, dropoff"; return; }
+  if(!pickupSelected ||!dropoffSelected){ /* allow but warn */ }
   msg.textContent="Requesting...";
   const otp=Math.floor(1000+Math.random()*9000).toString();
   const payload={
@@ -297,9 +429,11 @@ document.getElementById("requestBtn").onclick=async()=>{
   };
   try{
     const ref=await addDoc(collection(db,"delivery_requests"),payload);
-    msg.textContent="✓ Request sent! OTP: "+otp;
-    document.getElementById("pickup").value=""; document.getElementById("dropoff").value=""; document.getElementById("offer").value=""; document.getElementById("desc").value="";
+    msg.textContent="✓ Request sent! OTP: "+otp+" • Fare ₦"+offer.toLocaleString();
+    document.getElementById("pickup").value=""; document.getElementById("dropoff").value=""; document.getElementById("desc").value="";
     document.getElementById("parcelImg").style.display='none'; document.getElementById("parcelPlace").style.display='block'; parcelPicB64=null;
+    lastCalculatedDistance=0; lastCalculatedFare=0;
+    document.getElementById("autoDistance").textContent="-- km"; document.getElementById("autoFare").textContent="₦0";
     setTimeout(()=> openTrack(ref.id), 800);
   }catch(e){ msg.textContent="❌ "+e.message; }
 };
@@ -323,7 +457,7 @@ function renderOrders(){
     const st=r.status==='searching'?'🔍 Searching':r.status==='accepted'?'✅ Accepted by '+ (r.driverName||'Driver') : r.status==='delivered'?'📦 Delivered':'';
     return `<div class="order ${r.status==='accepted'?'accepted':''}" onclick="openTrack('${r.id}')" style="margin-bottom:8px;cursor:pointer">
       <div style="display:flex;justify-content:space-between"><b style="font-size:13px">${r.pickup} → ${r.dropoff}</b><span style="font-size:10px;font-weight:800;background:#F5F3FF;padding:2px 8px;border-radius:999px">${st}</span></div>
-      <div class="small" style="margin-top:4px">₦${(r.offerAmount||0).toLocaleString()} • OTP: ${r.otp} • ${r.itemType||'Parcel'}</div>
+      <div class="small" style="margin-top:4px">₦${(r.offerAmount||0).toLocaleString()} • ${r.distance?.toFixed?.(1)||'--'}km • OTP: ${r.otp}</div>
       ${r.parcelPhoto?`<img src="${r.parcelPhoto}" style="width:100%;height:80px;object-fit:cover;border-radius:10px;margin-top:6px">`:''}
       <div style="font-size:11px;color:#7C3AED;font-weight:700;margin-top:6px">Tap to track →</div>
     </div>`;
@@ -402,12 +536,6 @@ async function updateMap(){
   routeLine=L.polyline([[pickup.lat,pickup.lng],[drop.lat,drop.lng]],{color:'#7C3AED',weight:4,dashArray:'8,8',opacity:.6}).addTo(osmMap);
   const bounds=L.latLngBounds([[pickup.lat,pickup.lng],[drop.lat,drop.lng]]);
   osmMap.fitBounds(bounds,{padding:[60,60]});
-  if(currentTrack.status==='accepted'){
-    const dist=Math.sqrt(Math.pow(driverPos.lat-drop.lat,2)+Math.pow(driverPos.lng-drop.lng,2))*111;
-    document.getElementById("compassDist").textContent=dist.toFixed(1)+' km away • Driver coming';
-  } else {
-    document.getElementById("compassDist").textContent='Waiting for driver...';
-  }
 }
 document.getElementById("backTrack").onclick=()=>{ document.getElementById("trackPage").style.display='none'; currentTrack=null; };
 </script>
