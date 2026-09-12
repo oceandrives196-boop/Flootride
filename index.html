@@ -50,12 +50,11 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
 </style>
 </head>
 <body>
-
 <div id="authScreen" class="auth-bg">
   <div style="text-align:center;color:#fff;margin-bottom:20px">
     <div class="logo-big"><i class="fa-solid fa-box"></i></div>
     <div style="font-weight:900;font-size:22px">FLOOT NG</div>
-    <div style="opacity:.8;font-size:13px;margin-top:4px">Customer App • Auto Fare ₦200/km</div>
+    <div style="opacity:.8;font-size:13px;margin-top:4px">Customer App • Auto Fare ₦200/km + Rating</div>
   </div>
   <div class="auth-card">
     <div class="tabs"><div id="loginTab" class="tab active">Login</div><div id="regTab" class="tab">Register</div></div>
@@ -99,7 +98,6 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
       <div class="input-wrap" style="position:relative"><i class="fa-solid fa-location-dot"></i><input id="pickup" class="input" placeholder="Start typing pickup (e.g. Ketu) *" autocomplete="off"><div id="pickupSuggest" class="suggestBox"></div></div>
       <div class="input-wrap" style="position:relative"><i class="fa-solid fa-flag-checkered"></i><input id="dropoff" class="input" placeholder="Start typing dropoff (e.g. Lekki) *" autocomplete="off"><div id="dropoffSuggest" class="suggestBox"></div></div>
       <div class="input-wrap"><i class="fa-solid fa-box"></i><input id="itemType" class="input" placeholder="Item (Food, Docs)"></div>
-
       <div id="autoFareBox" style="background:linear-gradient(135deg,#F5F3FF,#EDE9FE);border:1px solid #DDD6FE;border-radius:14px;padding:12px;margin-top:4px;margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div><div style="font-size:10px;font-weight:800;letter-spacing:.1em;color:#7C3AED">AUTO DISTANCE</div><div id="autoDistance" style="font-weight:900;font-size:16px;color:#1F1A2E">-- km</div><div style="font-size:10px;color:#8B8BA7" id="autoRoute">Enter pickup & dropoff</div></div>
@@ -112,7 +110,6 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
       </div>
       <input type="hidden" id="distance"><input type="hidden" id="offer">
       <div class="input-wrap"><i class="fa-solid fa-pen"></i><input id="desc" class="input" placeholder="Description (optional)"></div>
-
       <div style="margin-top:12px">
         <div class="label">PARCEL PHOTO * (Driver will see this)</div>
         <label for="parcelFile" id="parcelLabel" class="parcelBox">
@@ -124,11 +121,9 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
         <div id="parcelErr" style="font-size:11px;color:#EF4444;font-weight:700;margin-top:4px;display:none">❌ Parcel photo required</div>
         <div id="parcelOk" style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;display:none">✓ Parcel photo added</div>
       </div>
-
       <button id="requestBtn" class="btn btn-primary" style="margin-top:14px"><i class="fa-solid fa-paper-plane"></i> REQUEST DELIVERY</button>
       <div id="requestMsg" class="small" style="text-align:center;margin-top:8px;min-height:16px"></div>
     </div>
-
     <div class="card">
       <div class="label">MY ORDERS</div>
       <div id="ordersBox"><div class="small">No orders yet. Request above.</div></div>
@@ -170,10 +165,29 @@ body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-
   </div>
 </div>
 
+<div id="ratingModal" style="position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:24px;padding:24px;max-width:340px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#10B981,#34D399);display:grid;place-items:center;margin:0 auto;color:#fff;font-size:28px">✓</div>
+    <div style="font-weight:900;font-size:18px;margin-top:12px">Delivered!</div>
+    <div class="small" style="margin-top:4px">How was your driver?</div>
+    <div style="display:flex;gap:8px;justify-content:center;margin-top:16px" id="starsBox">
+      <span class="star" data-star="1" style="font-size:32px;cursor:pointer;color:#E5E7EB">★</span>
+      <span class="star" data-star="2" style="font-size:32px;cursor:pointer;color:#E5E7EB">★</span>
+      <span class="star" data-star="3" style="font-size:32px;cursor:pointer;color:#E5E7EB">★</span>
+      <span class="star" data-star="4" style="font-size:32px;cursor:pointer;color:#E5E7EB">★</span>
+      <span class="star" data-star="5" style="font-size:32px;cursor:pointer;color:#E5E7EB">★</span>
+    </div>
+    <div id="ratingText" style="font-size:13px;font-weight:700;color:#7C3AED;margin-top:8px;min-height:18px">Tap to rate</div>
+    <textarea id="ratingComment" placeholder="Optional comment (e.g. Fast, polite...)" style="width:100%;margin-top:12px;background:#F5F3FF;border:1px solid #EDE9FE;border-radius:12px;padding:10px;font-size:12px;resize:none" rows="2"></textarea>
+    <button id="submitRatingBtn" class="btn btn-primary" style="margin-top:12px">SUBMIT RATING</button>
+    <button id="skipRatingBtn" class="btn btn-ghost" style="margin-top:8px">Skip</button>
+  </div>
+</div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc, addDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, limit, onSnapshot, doc, setDoc, getDoc, addDoc, where, getDocs, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 const firebaseConfig = {
   apiKey: "AIzaSyBVIJq5napb_egiLdKhGtySZoPeLUkY9Q4",
   authDomain: "floot-delivery.firebaseapp.com",
@@ -192,7 +206,6 @@ let lastCalculatedFare=0;
 let pickupSelected=false, dropoffSelected=false;
 
 function debounce(fn, delay){ let t; return (...args)=>{ clearTimeout(t); t=setTimeout(()=>fn(...args), delay); }; }
-
 async function fetchPlaces(query){
   if(!query || query.length<2) return [];
   try{
@@ -202,7 +215,6 @@ async function fetchPlaces(query){
     return data.map(d=>({display: d.display_name, short: (d.address?.road||d.name||'').slice(0,30), full: d.display_name, lat: d.lat, lon: d.lon, type: d.type||d.class}));
   }catch{ return []; }
 }
-
 function showSuggestions(boxId, items, inputId){
   const box=document.getElementById(boxId);
   if(!items.length){ box.style.display='none'; return; }
@@ -218,21 +230,18 @@ function showSuggestions(boxId, items, inputId){
     };
   });
 }
-
 const handlePickupInput = debounce(async (e)=>{
   const q=e.target.value.trim();
   if(q.length<2){ document.getElementById('pickupSuggest').style.display='none'; return; }
   const places=await fetchPlaces(q);
   showSuggestions('pickupSuggest', places, 'pickup');
 }, 350);
-
 const handleDropoffInput = debounce(async (e)=>{
   const q=e.target.value.trim();
   if(q.length<2){ document.getElementById('dropoffSuggest').style.display='none'; return; }
   const places=await fetchPlaces(q);
   showSuggestions('dropoffSuggest', places, 'dropoff');
 }, 350);
-
 async function geocodeForFare(addr){
   try{
     const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(addr+', Lagos, Nigeria')}&limit=1`);
@@ -338,7 +347,7 @@ document.getElementById("parcelChooseBtn").onclick=()=>document.getElementById("
 
 const saved=JSON.parse(localStorage.getItem("floot_customer_session")||"null");
 if(saved){ loginWithProfile(saved); }
-function showMain(){ document.getElementById("authScreen").style.display="none"; document.getElementById("mainApp").style.display="flex"; }
+function showMain(){ document.getElementById("authScreen").style.display="none"; document.getElementById("mainApp").style.display="flex"; setTimeout(()=>{ try{ initRating(); }catch{} }, 500); }
 function loginWithProfile(profile){
   currentUser=profile;
   document.getElementById("custName").textContent=profile.name;
@@ -417,7 +426,6 @@ document.getElementById("requestBtn").onclick=async()=>{
   const msg=document.getElementById("requestMsg");
   if(!parcelPicB64){ document.getElementById("parcelErr").style.display='block'; msg.textContent="❌ Parcel photo required"; return; }
   if(!pickup||!dropoff||!offer){ msg.textContent="❌ Fill pickup, dropoff"; return; }
-  if(!pickupSelected ||!dropoffSelected){ /* allow but warn */ }
   msg.textContent="Requesting...";
   const otp=Math.floor(1000+Math.random()*9000).toString();
   const payload={
@@ -454,10 +462,10 @@ function renderOrders(){
   const box=document.getElementById("ordersBox");
   if(allOrders.length===0){ box.innerHTML='<div class="small">No orders yet.</div>'; return; }
   box.innerHTML=allOrders.map(r=>{
-    const st=r.status==='searching'?'🔍 Searching':r.status==='accepted'?'✅ Accepted by '+ (r.driverName||'Driver') : r.status==='delivered'?'📦 Delivered':'';
+    const st=r.status==='searching'?'🔍 Searching':r.status==='accepted'?'✅ Accepted by '+ (r.driverName||'Driver') : r.status==='delivered'?'📦 Delivered ✓':'';
     return `<div class="order ${r.status==='accepted'?'accepted':''}" onclick="openTrack('${r.id}')" style="margin-bottom:8px;cursor:pointer">
       <div style="display:flex;justify-content:space-between"><b style="font-size:13px">${r.pickup} → ${r.dropoff}</b><span style="font-size:10px;font-weight:800;background:#F5F3FF;padding:2px 8px;border-radius:999px">${st}</span></div>
-      <div class="small" style="margin-top:4px">₦${(r.offerAmount||0).toLocaleString()} • ${r.distance?.toFixed?.(1)||'--'}km • OTP: ${r.otp}</div>
+      <div class="small" style="margin-top:4px">₦${(r.offerAmount||0).toLocaleString()} • ${r.distance?.toFixed?.(1)||'--'}km • OTP: ${r.otp} ${r.rating?'• ★'+r.rating:''}</div>
       ${r.parcelPhoto?`<img src="${r.parcelPhoto}" style="width:100%;height:80px;object-fit:cover;border-radius:10px;margin-top:6px">`:''}
       <div style="font-size:11px;color:#7C3AED;font-weight:700;margin-top:6px">Tap to track →</div>
     </div>`;
@@ -480,16 +488,59 @@ window.openTrack=async(id)=>{
   updateTrackUI(order);
   setTimeout(()=>{ initMap(); updateMap(); },400);
 };
+let currentRating=0;
 function updateTrackUI(order){
-  document.getElementById("trackStatus").textContent=order.status==='searching'?'Searching...':order.status==='accepted'?'Accepted • OTP '+order.otp:'Delivered';
-  if(order.status==='accepted' && order.driverId){
+  document.getElementById("trackStatus").textContent=order.status==='searching'?'Searching...':order.status==='accepted'?'Accepted • OTP '+order.otp:order.status==='delivered'?'Delivered ✓':'';
+  if(order.status==='searching'){
+    document.getElementById("searchingInfo").style.display='block';
+    document.getElementById("driverInfo").style.display='none';
+  } else if(order.status==='accepted' && order.driverId){
     document.getElementById("searchingInfo").style.display='none';
     document.getElementById("driverInfo").style.display='block';
     getDriverProfile(order.driverId);
-  } else {
-    document.getElementById("searchingInfo").style.display='block';
-    document.getElementById("driverInfo").style.display='none';
+  } else if(order.status==='delivered'){
+    document.getElementById("searchingInfo").style.display='none';
+    document.getElementById("driverInfo").style.display='block';
+    getDriverProfile(order.driverId);
+    if(!order.rating){
+      setTimeout(()=>{ document.getElementById("ratingModal").style.display='flex'; }, 800);
+    }
   }
+}
+function initRating(){
+  document.querySelectorAll('.star').forEach(st=>{
+    st.onclick=()=>{
+      currentRating=parseInt(st.dataset.star);
+      document.querySelectorAll('.star').forEach((s,i)=>{
+        s.style.color = i < currentRating? '#F59E0B' : '#E5E7EB';
+      });
+      const texts=['','Terrible','Bad','Okay','Good','Excellent!'];
+      document.getElementById("ratingText").textContent=texts[currentRating]+' • '+currentRating+'/5';
+    };
+  });
+  document.getElementById("submitRatingBtn").onclick=async()=>{
+    if(currentRating===0){ alert('Please tap a star to rate'); return; }
+    const comment=document.getElementById("ratingComment").value.trim();
+    const btn=document.getElementById("submitRatingBtn");
+    btn.textContent='Submitting...';
+    try{
+      const orderRef=doc(db,"delivery_requests",currentTrack.id);
+      await updateDoc(orderRef,{rating: currentRating, ratingComment: comment, ratedAt: new Date().toISOString(), ratedBy: currentUser.id});
+      const driverSnap=await getDoc(doc(db,"drivers",currentTrack.driverId));
+      if(driverSnap.exists()){
+        const d=driverSnap.data();
+        const prevCount=d.ratingCount||0;
+        const prevAvg=d.avgRating||5;
+        const newCount=prevCount+1;
+        const newAvg=((prevAvg*prevCount)+currentRating)/newCount;
+        await updateDoc(doc(db,"drivers",currentTrack.driverId),{avgRating: newAvg, ratingCount: newCount});
+      }
+      document.getElementById("ratingModal").style.display='none';
+      alert('Thanks! You rated '+currentRating+'/5 ★');
+    }catch(e){ alert('Rating failed: '+e.message); }
+    btn.textContent='SUBMIT RATING';
+  };
+  document.getElementById("skipRatingBtn").onclick=()=>{ document.getElementById("ratingModal").style.display='none'; };
 }
 async function getDriverProfile(driverId){
   try{
