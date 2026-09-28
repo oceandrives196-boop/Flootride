@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><style>
+@font-face {
+  font-family: "Optimistic";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url("/fonts/OptimisticAI_VF_Optimized.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Optimistic Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/OptimisticMono_W_TextRegular.woff2") format("woff2");
+}
+:where(html) {
+  font-family: "Optimistic", system-ui, sans-serif;
+}
+:where(code, pre, kbd, samp) {
+  font-family: "Optimistic Mono", ui-monospace, monospace;
+}
+</style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Floot NG Customer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--purple:#7C3AED;--purple2:#A78BFA;--purple3:#EDE9FE;--white:#FFFFFF;--gray:#F5F3FF;--text:#1F1A2E;--muted:#6B7280;--green:#10B981}
+body{background:var(--white);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;overflow:hidden}
+.app{max-width:420px;margin:0 auto;min-height:100vh;background:linear-gradient(180deg,#FFFFFF 0%, #FAF7FF 100%);position:relative;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.auth-bg{background:linear-gradient(180deg,#7C3AED 0%, #5B21B6 100%);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;position:fixed;inset:0;z-index:10000;overflow:auto}
+.auth-card{width:100%;max-width:380px;background:#fff;border-radius:28px;padding:28px;box-shadow:0 20px 60px rgba(92,33,182,.25)}
+.logo-big{width:80px;height:80px;border-radius:18px;background:#fff;display:grid;place-items:center;margin:0 auto 14px;overflow:hidden;padding:8px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.input{width:100%;background:#F5F3FF;border:1px solid #EDE9FE;border-radius:14px;padding:14px 14px 14px 42px;font-size:14px;outline:none;color:var(--text);transition:.2s;margin-bottom:10px}
+.input:focus{border-color:var(--purple);background:#fff;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
+.input-wrap{position:relative;margin-bottom:2px}
+.input-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--purple2);font-size:14px}
+.btn{width:100%;border:none;border-radius:14px;padding:14px;font-weight:800;font-size:14px;cursor:pointer;transition:.2s}
+.btn-primary{background:linear-gradient(90deg,#7C3AED,#8B5CF6);color:#fff;box-shadow:0 8px 20px rgba(124,58,237,.25)}
+.btn-ghost{background:#F5F3FF;color:var(--purple);border:1px solid #EDE9FE}
+.tabs{display:flex;background:#F5F3FF;border-radius:12px;padding:4px;margin-bottom:20px}
+.tab{flex:1;padding:10px;border-radius:10px;text-align:center;font-weight:800;font-size:13px;cursor:pointer;color:var(--muted)}
+.tab.active{background:#fff;color:var(--purple);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.small{font-size:11px;color:var(--muted)}
+.header{padding:16px 18px;display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid #F3F0FF;position:sticky;top:0;z-index:10}
+.avatar{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#7C3AED,#A78BFA);display:grid;place-items:center;color:#fff;font-weight:900;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.main{padding:16px;display:flex;flex-direction:column;gap:16px;flex:1;background:#FBFAFF;overflow:auto;padding-bottom:80px}
+.card{background:#fff;border:1px solid #F3F0FF;border-radius:20px;padding:16px;box-shadow:0 4px 20px rgba(124,58,237,.06)}
+.label{font-size:10px;font-weight:800;letter-spacing:.12em;color:#8B8BA7;margin-bottom:8px}
+.picBox{width:90px;height:90px;border-radius:50%;background:#F5F3FF;border:2px dashed #DDD6FE;display:grid;place-items:center;overflow:hidden;cursor:pointer;position:relative;margin:0 auto}
+.picBox img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
+.parcelBox{width:100%;height:160px;border-radius:16px;background:#F5F3FF;border:2px dashed #DDD6FE;display:grid;place-items:center;overflow:hidden;cursor:pointer;position:relative}
+.parcelBox img{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
+.suggestBox{position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #EDE9FE;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:100;max-height:180px;overflow:auto;display:none}
+.suggestItem{padding:10px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid #F5F3FF;display:flex;gap:8px;align-items:center}
+.suggestItem:hover{background:#F5F3FF}
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#fff;border-top:1px solid #F3F0FF;display:flex;justify-content:space-around;padding:8px 0 14px;z-index:50}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;padding:6px 18px;border-radius:12px}
+.nav-item.active{color:var(--purple);background:#F5F3FF}
+.nav-item i{font-size:18px}
+.verify-banner{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:#FEF3C7;border-bottom:1px solid #FDE68A;padding:10px 14px;z-index:10001;display:none;align-items:center;justify-content:space-between;gap:10px}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="verifyBanner" class="verify-banner">
+  <div style="display:flex;gap:8px;align-items:center"><i class="fa-solid fa-envelope" style="color:#D97706"></i><div><div style="font-weight:800;font-size:11px;color:#92400E">Please verify your email</div><div class="small" style="font-size:10px">Check inbox & spam folder</div></div></div>
+  <button id="resendBtn" style="background:#7C3AED;color:#fff;border:none;padding:6px 12px;border-radius:999px;font-weight:800;font-size:10px">RESEND</button>
+</div>
+
+<div id="authScreen" class="auth-bg">
+  <div style="text-align:center;color:#fff;margin-bottom:20px">
+    <div class="logo-big"><img src="https://ik.imagekit.io/anyl9hsxh/FB_IMG_1773667740309.jpg?updatedAt=1789125101906" style="width:100%;height:100%;object-fit:contain;border-radius:12px"></div>
+    <div style="font-weight:900;font-size:22px">FLOOT NG</div>
+    <div style="opacity:.9;font-size:13px;margin-top:4px">Customer App</div>
+  </div>
+  <div class="auth-card">
+    <div class="tabs"><div id="loginTab" class="tab active">Login</div><div id="regTab" class="tab">Register</div></div>
+    <div id="loginForm">
+      <div class="input-wrap"><i class="fa-solid fa-envelope"></i><input id="loginEmail" class="input" type="email" placeholder="Email"></div>
+      <div class="input-wrap"><i class="fa-solid fa-lock"></i><input id="loginPass" class="input" type="password" placeholder="Password"></div>
+      <button id="loginBtn" class="btn btn-primary" style="margin-top:6px">LOGIN</button>
+      <div id="loginMsg" class="small" style="text-align:center;margin-top:10px;min-height:16px"></div>
+    </div>
+    <div id="regForm" style="display:none">
+      <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px">
+        <label for="picFile" class="picBox">
+          <div id="picPlace" style="text-align:center"><div style="width:32px;height:32px;border-radius:50%;background:#EDE9FE;display:grid;place-items:center;margin:0 auto;color:#7C3AED"><i class="fa-solid fa-camera"></i></div><div style="font-size:10px;font-weight:800;color:#7C3AED;margin-top:4px">Add Photo *</div></div>
+          <img id="picImg">
+          <div style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:#7C3AED;border:2px solid #fff;display:grid;place-items:center;color:#fff;font-size:11px;z-index:2"><i class="fa-solid fa-camera"></i></div>
+        </label>
+        <input id="picFile" type="file" accept="image/*" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px">
+        <button id="picChooseBtn" type="button" style="margin-top:8px;background:#7C3AED;color:#fff;border:none;padding:6px 14px;border-radius:999px;font-size:11px;font-weight:800">CHOOSE PHOTO *</button>
+        <div id="picOk" style="font-size:11px;color:#10B981;font-weight:700;margin-top:4px;display:none">✓ Photo added</div>
+      </div>
+      <div class="input-wrap"><i class="fa-solid fa-user"></i><input id="regName" class="input" placeholder="Full Name *"></div>
+      <div class="input-wrap"><i class="fa-solid fa-phone"></i><input id="regPhone" class="input" placeholder="Phone *"></div>
+      <div class="input-wrap"><i class="fa-solid fa-envelope"></i><input id="regEmail" class="input" type="email" placeholder="Email *"></div>
+      <div class="input-wrap"><i class="fa-solid fa-lock"></i><input id="regPass" class="input" type="password" placeholder="Password *"></div>
+      <button id="regBtn" class="btn btn-primary" style="margin-top:6px">CREATE ACCOUNT</button>
+      <div id="regMsg" class="small" style="text-align:center;margin-top:10px;min-height:16px"></div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none">
+  <div class="header">
+    <div style="display:flex;gap:10px;align-items:center"><div class="avatar" id="avatar">C</div><div><div style="font-weight:800;font-size:14px" id="custName">Customer</div><div class="small" id="custEmail">...</div></div></div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="text-align:right;line-height:1.1"><div style="font-size:9px;font-weight:800;color:#8B8BA7;letter-spacing:.1em">WALLET</div><div id="walletBalHeader" style="font-weight:900;font-size:14px;color:#7C3AED">₦0</div></div>
+      <button onclick="window.open('https://wallet.floot.com.ng','_blank')" style="background:linear-gradient(90deg,#7C3AED,#8B5CF6);color:#fff;border:none;padding:8px 14px;border-radius:10px;font-size:11px;font-weight:800"><i class="fa-solid fa-wallet"></i> Wallet</button>
+      <button id="logoutBtnTop" style="width:32px;height:32px;border-radius:10px;border:1px solid #F3F0FF;background:#fff;color:#6B7280"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </div>
+  </div>
+
+  <div id="homeView" style="flex:1;overflow:auto;display:flex;flex-direction:column">
+    <div class="main">
+      <div class="card">
+        <div class="label">SEND A PARCEL</div>
+        <div class="input-wrap" style="position:relative"><i class="fa-solid fa-location-dot"></i><input id="pickup" class="input" placeholder="Pickup *" autocomplete="off"><div id="pickupSuggest" class="suggestBox"></div></div>
+        <div class="input-wrap" style="position:relative"><i class="fa-solid fa-flag-checkered"></i><input id="dropoff" class="input" placeholder="Dropoff *" autocomplete="off"><div id="dropoffSuggest" class="suggestBox"></div></div>
+        <div class="input-wrap"><i class="fa-solid fa-box"></i><input id="itemType" class="input" placeholder="Item (Food, Docs)"></div>
+        <div id="autoFareBox" style="background:#F5F3FF;border:1px solid #EDE9FE;border-radius:14px;padding:12px;margin-top:4px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><div style="font-size:10px;font-weight:800;color:#7C3AED">DISTANCE</div><div id="autoDistance" style="font-weight:900;font-size:16px">-- km</div></div>
+            <div style="text-align:right"><div style="font-size:10px;font-weight:800;color:#7C3AED">FARE</div><div id="autoFare" style="font-weight:900;font-size:20px;color:#7C3AED">₦0</div></div>
+          </div>
+        </div>
+        <input type="hidden" id="distance"><input type="hidden" id="offer">
+        <div class="input-wrap"><i class="fa-solid fa-pen"></i><input id="desc" class="input" placeholder="Description (optional)"></div>
+        <div style="margin-top:12px">
+          <div class="label">PARCEL PHOTO *</div>
+          <label for="parcelFile" class="parcelBox">
+            <div id="parcelPlace" style="text-align:center"><div style="width:48px;height:48px;border-radius:14px;background:#EDE9FE;display:grid;place-items:center;margin:0 auto;color:#7C3AED;font-size:20px"><i class="fa-solid fa-camera"></i></div><div style="font-weight:800;font-size:12px;color:#7C3AED;margin-top:6px">Add parcel photo</div></div>
+            <img id="parcelImg">
+          </label>
+          <input id="parcelFile" type="file" accept="image/*" capture="environment" style="position:absolute;left:-9999px;opacity:0;width:1px;height:1px">
+        </div>
+        <button id="requestBtn" class="btn btn-primary" style="margin-top:14px"><i class="fa-solid fa-paper-plane"></i> REQUEST DELIVERY</button>
+        <div id="requestMsg" class="small" style="text-align:center;margin-top:8px;min-height:16px"></div>
+      </div>
+      <div class="card">
+        <div class="label">ACTIVE ORDERS</div>
+        <div id="ordersBox"><div class="small">No active orders.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyView" style="flex:1;overflow:auto;padding:16px;background:#FBFAFF;display:none;padding-bottom:90px">
+    <div style="font-weight:900;font-size:18px;margin-bottom:12px">History</div>
+    <div id="historyBox"></div>
+  </div>
+
+  <div id="supportView" style="flex:1;overflow:hidden;display:none;flex-direction:column;background:#FBFAFF;padding-bottom:70px">
+    <div style="padding:16px;background:#fff;border-bottom:1px solid #F3F0FF"><div style="font-weight:900;font-size:18px">Support</div></div>
+    <div id="supportMessages" style="flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px;background:#FBFAFF"></div>
+    <div style="padding:12px;background:#fff;border-top:1px solid #F3F0FF;display:flex;gap:8px"><textarea id="supportInput" placeholder="Type..." style="flex:1;background:#F5F3FF;border:1px solid #EDE9FE;border-radius:14px;padding:12px;font-size:13px"></textarea><button id="supportSendBtn" style="width:44px;height:44px;border-radius:12px;background:#7C3AED;color:#fff;border:none">Send</button></div>
+  </div>
+
+  <div id="profileView" style="flex:1;overflow:auto;padding:16px;background:#FBFAFF;display:none;padding-bottom:90px">
+    <div style="font-weight:900;font-size:18px;margin-bottom:12px">My Profile</div>
+    <div class="card"><div id="profileName">Customer</div><div class="small" id="profileEmail">email</div></div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active" data-view="home"><i class="fa-solid fa-house"></i><span>Home</span></div>
+    <div class="nav-item" data-view="history"><i class="fa-solid fa-clock-rotate-left"></i><span>History</span></div>
+    <div class="nav-item" data-view="support"><i class="fa-solid fa-headset"></i><span>Support</span></div>
+    <div class="nav-item" data-view="profile"><i class="fa-solid fa-user"></i><span>Profile</span></div>
+  </div>
+</div>
+
+<script>
+const firebaseConfig={apiKey:"AIzaSyBVIJq5napb_egiLdKhGtySZoPeLUkY9Q4",authDomain:"floot-delivery.firebaseapp.com",projectId:"floot-delivery",storageBucket:"floot-delivery.firebasestorage.app",messagingSenderId:"786230599434",appId:"1:786230599434:web:e1913bd8c2e69a7e1c64f3"};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+let currentUser=null, profilePicB64=null, parcelPicB64=null;
+let lastCalculatedDistance=0, lastCalculatedFare=0;
+const BASE_FARE=1000, RATE_PER_KM=200;
+
+function emailToId(e){ return e.toLowerCase().replace(/[^a-z0-9]/g,"_"); }
+function showBanner(show){ const b=document.getElementById("verifyBanner"); if(b) b.style.display = show ? "flex" : "none"; }
+
+document.getElementById("resendBtn").onclick = async ()=>{
+  const u = auth.currentUser;
+  if(!u){ alert("Login first"); return; }
+  try{ await u.sendEmailVerification(); alert("Verification sent to "+u.email); }catch(e){ alert(e.message); }
+};
+
+// Tabs
+document.getElementById("loginTab").onclick=()=>{ document.getElementById("loginTab").classList.add("active"); document.getElementById("regTab").classList.remove("active"); document.getElementById("loginForm").style.display="block"; document.getElementById("regForm").style.display="none"; };
+document.getElementById("regTab").onclick=()=>{ document.getElementById("regTab").classList.add("active"); document.getElementById("loginTab").classList.remove("active"); document.getElementById("loginForm").style.display="none"; document.getElementById("regForm").style.display="block"; };
+
+// Photos
+function handleProfile(file){ if(!file) return; const r=new FileReader(); r.onload=(ev)=>{ profilePicB64=ev.target.result; document.getElementById("picImg").src=profilePicB64; document.getElementById("picImg").style.display='block'; document.getElementById("picPlace").style.display='none'; document.getElementById("picOk").style.display='block'; }; r.readAsDataURL(file); }
+function handleParcel(file){ if(!file) return; const r=new FileReader(); r.onload=(ev)=>{ parcelPicB64=ev.target.result; document.getElementById("parcelImg").src=parcelPicB64; document.getElementById("parcelImg").style.display='block'; document.getElementById("parcelPlace").style.display='none'; }; r.readAsDataURL(file); }
+document.getElementById("picFile")?.addEventListener('change',e=>handleProfile(e.target.files[0]));
+document.getElementById("picChooseBtn")?.addEventListener('click',()=>document.getElementById("picFile").click());
+document.getElementById("parcelFile")?.addEventListener('change',e=>handleParcel(e.target.files[0]));
+
+// Wallet - simple read
+function initWallet(email){
+  const id=emailToId(email);
+  db.collection("wallets").doc(id).onSnapshot(snap=>{
+    if(snap.exists()){
+      const total = Number(snap.data().balance||0) + Number(snap.data().bonusBalance||0);
+      document.getElementById("walletBalHeader").textContent="₦"+total.toLocaleString();
+    }
+  });
+  db.collection("drivers").doc(id).onSnapshot(snap=>{
+    if(snap.exists()){
+      const total = Number(snap.data().walletBalance||0);
+      const el=document.getElementById("walletBalHeader");
+      if(el && total>0) el.textContent="₦"+total.toLocaleString();
+    }
+  });
+}
+
+// === AUTH - CLEAN, NO EXTRA TEXT ===
+async function doLogin(email, pass, msgEl){
+  email=email.toLowerCase().trim();
+  msgEl.textContent="Checking..."; msgEl.style.color="#7C3AED";
+  let cred;
+  try{
+    cred = await auth.signInWithEmailAndPassword(email, pass);
+  }catch(e){
+    if(e.code==="auth/user-not-found" || e.code==="auth/invalid-credential"){
+      // Former user in Firestore? Create Auth for them
+      const q = await db.collection("customers").where("email","==",email).limit(1).get().catch(()=>({empty:true}));
+      if(!q.empty){
+        try{
+          cred = await auth.createUserWithEmailAndPassword(email, pass);
+          await cred.user.sendEmailVerification();
+          msgEl.innerHTML="Verification sent to <b>"+email+"</b>. Check inbox & spam, then login again.";
+          msgEl.style.color="#92400E";
+          showBanner(true);
+          return null;
+        }catch(err){ throw err; }
+      }
+    }
+    throw e;
+  }
+  const user=cred.user;
+  await user.reload();
+  if(!user.emailVerified){
+    showBanner(true);
+    try{ await user.sendEmailVerification(); }catch{}
+    msgEl.innerHTML="Please verify your email. Link sent to <b>"+email+"</b>. Check spam too.";
+    msgEl.style.color="#92400E";
+    return null;
+  }
+  showBanner(false);
+  localStorage.setItem("floot_session", JSON.stringify({email:email, uid:user.uid}));
+  return user;
+}
+
+async function loadProfile(fbUser){
+  const email=fbUser.email.toLowerCase();
+  const id=emailToId(email);
+  let profile=null;
+  try{ const snap=await db.collection("customers").doc(id).get(); if(snap.exists) profile=snap.data(); }catch{}
+  if(!profile){
+    try{ const q=await db.collection("customers").where("email","==",email).limit(1).get(); if(!q.empty) profile=q.docs[0].data(); }catch{}
+  }
+  if(!profile){
+    profile={id:id,email:email,name:email.split("@")[0],phone:"",profilePic:profilePicB64||null,createdAt:new Date().toISOString()};
+    await db.collection("customers").doc(id).set({...profile,firebaseUid:fbUser.uid,emailVerified:true},{merge:true}).catch(()=>{});
+  }
+  currentUser=profile;
+  document.getElementById("custName").textContent=profile.name||email.split("@")[0];
+  document.getElementById("custEmail").textContent=profile.email;
+  document.getElementById("profileName").textContent=profile.name||email;
+  document.getElementById("profileEmail").textContent=profile.email;
+  const av=document.getElementById("avatar");
+  if(profile.profilePic) av.innerHTML=`<img src="${profile.profilePic}">`; else av.textContent=(profile.name||"C")[0].toUpperCase();
+  document.getElementById("authScreen").style.display="none";
+  document.getElementById("mainApp").style.display="flex";
+  initWallet(email);
+  initNav();
+}
+
+function initNav(){
+  document.querySelectorAll(".nav-item").forEach(item=>{
+    item.onclick=()=>{
+      document.querySelectorAll(".nav-item").forEach(i=>i.classList.remove("active")); 
+      item.classList.add("active");
+      const view=item.dataset.view;
+      document.getElementById("homeView").style.display= view==="home"?"flex":"none";
+      document.getElementById("historyView").style.display= view==="history"?"block":"none";
+      document.getElementById("supportView").style.display= view==="support"?"flex":"none";
+      document.getElementById("profileView").style.display= view==="profile"?"block":"none";
+    };
+  });
+}
+
+// Login
+document.getElementById("loginBtn").onclick = async ()=>{
+  const email=document.getElementById("loginEmail").value.trim();
+  const pass=document.getElementById("loginPass").value.trim();
+  const msg=document.getElementById("loginMsg");
+  if(!email||!pass){ msg.textContent="Enter email & password"; return; }
+  try{
+    const u = await doLogin(email, pass, msg);
+    if(!u) return;
+    msg.textContent="Success"; msg.style.color="#10B981";
+    await loadProfile(u);
+  }catch(e){ msg.textContent=e.message; msg.style.color="#DC2626"; }
+};
+
+// Register
+document.getElementById("regBtn").onclick = async ()=>{
+  const name=document.getElementById("regName").value.trim();
+  const phone=document.getElementById("regPhone").value.trim();
+  const email=document.getElementById("regEmail").value.trim().toLowerCase();
+  const pass=document.getElementById("regPass").value.trim();
+  const msg=document.getElementById("regMsg");
+  if(!name||!phone||!email||!pass){ msg.textContent="Fill all fields"; return; }
+  if(pass.length<6){ msg.textContent="Password min 6"; return; }
+  msg.textContent="Creating..."; msg.style.color="#7C3AED";
+  try{
+    const cred=await auth.createUserWithEmailAndPassword(email, pass);
+    await cred.user.sendEmailVerification();
+    const id=emailToId(email);
+    await db.collection("customers").doc(id).set({
+      id:id,name:name,phone:phone,email:email,profilePic:profilePicB64||null,
+      firebaseUid:cred.user.uid,emailVerified:false,createdAt:new Date().toISOString()
+    });
+    msg.innerHTML="Account created! Verification sent to <b>"+email+"</b>. Check inbox, verify, then login.";
+    msg.style.color="#10B981";
+  }catch(e){ msg.textContent=e.message; msg.style.color="#DC2626"; }
+};
+
+document.getElementById("logoutBtnTop").onclick=async()=>{
+  await auth.signOut();
+  localStorage.removeItem("floot_session");
+  location.reload();
+};
+
+// Simple fare calc
+document.getElementById("pickup")?.addEventListener('blur', ()=>{ lastCalculatedDistance=5; lastCalculatedFare=1000; document.getElementById("autoDistance").textContent="5.0 km"; document.getElementById("autoFare").textContent="₦1,000"; });
+document.getElementById("dropoff")?.addEventListener('blur', ()=>{ lastCalculatedDistance=5; lastCalculatedFare=1000; document.getElementById("autoDistance").textContent="5.0 km"; document.getElementById("autoFare").textContent="₦1,000"; });
+
+document.getElementById("requestBtn").onclick=async()=>{
+  const pickup=document.getElementById("pickup").value.trim();
+  const dropoff=document.getElementById("dropoff").value.trim();
+  const msg=document.getElementById("requestMsg");
+  if(!pickup||!dropoff){ msg.textContent="Fill pickup & dropoff"; return; }
+  msg.textContent="Requesting...";
+  try{
+    await db.collection("delivery_requests").add({
+      pickup:pickup,dropoff:dropoff,
+      distance:lastCalculatedDistance||5,
+      offerAmount:lastCalculatedFare||1000,
+      customerId:currentUser.id,customerName:currentUser.name,customerEmail:currentUser.email,
+      status:"searching",createdAt:new Date().toISOString()
+    });
+    msg.textContent="✓ Sent!";
+  }catch(e){ msg.textContent=e.message; }
+};
+
+auth.onAuthStateChanged(async (user)=>{
+  if(user){
+    await user.reload().catch(()=>{});
+    if(user.emailVerified) showBanner(false); else showBanner(true);
+  }
+});
+</script>
+<script>(function(){var loc=location.href.replace(/#.*$/,"");var ATTR_NAMES=["data-product-id","data-productid","data-product_id","product-id","productid","product_id","data-source-entity-id","source-entity-id","source_entity_id","data-product","data-metadata","data-meta"];var DATASET_KEYS=["productId","productid","product_id","sourceEntityId","sourceentityid","source_entity_id","product","metadata","meta"];function readProductId(value){if(typeof value!=="string"||value.length===0)return null;if(/^[0-9]{6,}$/.test(value))return value;var match=value.match(/(?:product(?:_|-)?id|source(?:_|-)?entity(?:_|-)?id)["'=:\s]+([0-9]{6,})/i);return match?match[1]:null}function extractProductId(start){for(var node=start;node&&node!==document.body;node=node.parentElement){for(var i=0;i<ATTR_NAMES.length;i++){var attrValue=node.getAttribute&&node.getAttribute(ATTR_NAMES[i]);var attrProductId=readProductId(attrValue);if(attrProductId)return attrProductId}var dataset=node.dataset||null;if(dataset){for(var j=0;j<DATASET_KEYS.length;j++){var dataValue=dataset[DATASET_KEYS[j]];var dataProductId=readProductId(dataValue);if(dataProductId)return dataProductId}}}return null}function isInlineMediaSlotElement(node){return !!(node&&node.getAttribute&&node.getAttribute("data-clippy-inline-media-slot")!==null)}function findInlineMediaSlot(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(isInlineMediaSlotElement(node))return node}return null}function readInlineMediaUrl(node){if(!node)return null;return node.getAttribute&&((node.getAttribute("data-clippy-inline-media-url")||node.getAttribute("data-url")||node.getAttribute("data_url")))||node.href||null}function stripHash(url){return String(url).replace(/#.*$/,"")}function urlsMatch(a,b){if(!a||!b)return false;try{return stripHash(new URL(a,loc).href)===stripHash(new URL(b,loc).href)}catch(_){return stripHash(a)===stripHash(b)}}function isFirstPartyReelUrl(value){try{var url=new URL(value,loc);if(url.protocol!=="https:")return false;var host=url.hostname.toLowerCase();var supported=host==="instagram.com"||host.endsWith(".instagram.com")||host==="facebook.com"||host.endsWith(".facebook.com");return supported&&/\/reels?\//i.test(url.pathname)}catch(_){return false}}function isInlineMediaUrlClick(node,href){var slot=findInlineMediaSlot(node);if(!slot)return false;var slotUrl=readInlineMediaUrl(slot);if(slotUrl)return urlsMatch(href,slotUrl);return isFirstPartyReelUrl(href)}function findDataHref(start){for(var node=start;node&&node!==document.body;node=node.parentElement){if(node.getAttribute){var href=node.getAttribute("data-href")||node.getAttribute("data-url");if(href)return{href:href,node:node}}}return null}var nativeOpen=window.open;window.open=function(url){if(parent!==window&&typeof url==="string"&&/^https?:\/\//.test(url)){parent.postMessage({type:"ecto:usercontent-link-click",href:url},"*");return null}return nativeOpen?nativeOpen.apply(window,arguments):null};document.addEventListener("click",function(e){var target=e.target instanceof Element?e.target:null;if(!target)return;if(parent===window)return;var a=target.closest?target.closest("a[href]"):null;if(a&&a.href&&/^https?:\/\//.test(a.href)&&a.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(a,a.href))return;var productId=extractProductId(target)||extractProductId(a);if(productId){e.preventDefault();parent.postMessage({type:"ecto-artifact-link-click",productId:productId},"*");return}e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:a.href},"*");return}var dataHref=findDataHref(target);if(dataHref&&/^https?:\/\//.test(dataHref.href)&&dataHref.href.replace(/#.*$/,"")!==loc){if(isInlineMediaUrlClick(dataHref.node,dataHref.href))return;e.preventDefault();parent.postMessage({type:"ecto:usercontent-link-click",href:dataHref.href},"*")}},true)})();</script><script>(function(){var FOCUS_TYPE="ecto:artifact-focus-request";var CLOSE_TYPE="ecto:artifact-close-request";function focusArtifactDocument(){var body=document.body;if(!body)return;try{window.focus();}catch(e){}if(!body.hasAttribute("tabindex"))body.setAttribute("tabindex","-1");try{body.focus({preventScroll:true});}catch(e){try{body.focus();}catch(e2){}}}window.addEventListener("message",function(event){if(event.source!==window.parent)return;var data=event.data;if(!data||typeof data!=="object"||data.type!==FOCUS_TYPE)return;if(document.readyState==="loading"){document.addEventListener("DOMContentLoaded",focusArtifactDocument,{once:true});return;}focusArtifactDocument();});window.addEventListener("keydown",function(event){if(event.key!=="Escape")return;window.setTimeout(function(){if(event.defaultPrevented)return;window.parent.postMessage({type:CLOSE_TYPE},"*");},0);});})();</script></body>
+</html>
